@@ -1,0 +1,23 @@
+PATIENT NAME: Vinay Sharma
+AGE/SEX: 22/M
+DATE OF ENCOUNTER: 2026-03-30
+FACILITY: Apollo City Clinic - Pulmonology Dept.
+ATTENDING: Dr. R. K. Desai, MD
+
+CHIEF COMPLAINT:
+Patient presents with persistent morning cough productive of grey sputum for 6 weeks. Mild exertional dyspnea when climbing stairs. 
+
+VITALS:
+BP: 135/88 | HR: 88 | Temp: 98.6F | SpO2: 95% on Room Air
+
+OBJECTIVE OBSERVATIONS:
+Auscultation reveals mild expiratory wheezing in bilateral lower lobes. Yellowish discoloration noted on the distal phalanges of the right index and middle fingers. 
+
+CURRENT MEDICATIONS & PLAN:
+1. Patient requested refill for current cessation program. Prescribed Varenicline 1mg PO BID x 30 days.
+2. Added Nicotex 4mg gum to be used PRN for acute breakthrough cravings.
+3. Prescribed Salbutamol HFA inhaler (100mcg/dose), 2 puffs QID PRN for wheezing/shortness of breath.
+4. Strongly counseled patient on the physiological risks of continuing current habits, especially given the new onset of wheezing. Patient agreed to adhere to the cessation timeline.
+
+FOLLOW UP:
+Return to clinic in 4 weeks for PFT (Pulmonary Function Test) evaluation.

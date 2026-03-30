@@ -1,0 +1,7 @@
+{
+  "application_id": "APP-001",
+  "name": "Vinay",
+  "age": 22,
+  "declared_smoker": false,
+  "raw_medical_text": "Patient health is good."
+}
