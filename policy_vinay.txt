@@ -1,0 +1,28 @@
+==============================================================================
+Decline Letter
+==============================================================================
+
+Dear Vinay,
+
+Re: Application for Insurance Policy
+
+We appreciate the time you took to apply for an insurance policy with us. After careful consideration, we regret to inform you that we are unable to offer you coverage at this time.
+
+The decision to decline your application was made based on our underwriting evaluation, which took into account your medical history. Our assessment revealed that you are being treated for nicotine addiction and respiratory conditions, including asthma and COPD. The medications prescribed for these conditions have a moderate to high risk profile due to potential side effects and serious warnings associated with their use.
+
+As a result, your overall medical risk class is considered Substandard, indicating a need for closer monitoring and potential adjustments to your treatment plan. Unfortunately, this risk profile does not align with our current underwriting guidelines.
+
+Please note that this decision is not a reflection on your character or worth as an individual. We understand that this news may be disappointing, and we encourage you to explore other options that may be available to you.
+
+If you have any questions or concerns regarding this decision, please do not hesitate to contact us.
+
+Sincerely,
+Policy Generation Agent
+
+------------------------------------------------------------------------------
+NEXT STEPS:
+You may want to consider consulting with your healthcare provider to discuss potential adjustments to your treatment plan. Additionally, you may explore other insurance options that may be available to you.
+------------------------------------------------------------------------------
+Generated at: LOCAL-ISSUANCE-NODE
+Status: ISSUED-TO-BROKER
+==============================================================================

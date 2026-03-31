@@ -1,0 +1,28 @@
+==============================================================================
+Insurance Coverage Review and Next Steps
+==============================================================================
+
+Dear Vinay,
+
+Thank you for considering our insurance coverage. We appreciate the opportunity to review your application.
+
+After careful evaluation, we have decided to refer your case for a manual review. This decision is based on your high risk profile, which is primarily due to your history of nicotine addiction and respiratory issues.
+
+We understand that this may cause some inconvenience, and we want to assure you that we are committed to providing you with the best possible coverage. Our underwriting team will review your case thoroughly and will be in touch with you soon to discuss the next steps.
+
+In the meantime, please do not hesitate to contact us if you have any questions or concerns.
+
+Thank you for your patience and cooperation.
+
+Sincerely,
+[Your Insurance Company]
+
+
+
+------------------------------------------------------------------------------
+NEXT STEPS:
+Our underwriting team will review your case manually and will be in touch with you soon to discuss the next steps.
+------------------------------------------------------------------------------
+Generated at: LOCAL-ISSUANCE-NODE
+Status: ISSUED-TO-BROKER
+==============================================================================

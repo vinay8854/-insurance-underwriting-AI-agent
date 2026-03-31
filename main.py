@@ -19,6 +19,9 @@ sys.path.append(str(Path(__file__).resolve().parent))
 from agents import create_nlp_agent, create_fraud_agent
 from agents.compliance_agent import compliance_check
 from agents.pricing_agent import calculate_premium
+from agents.clinical_reasoning_agent import evaluate_clinical_risk, create_clinical_reasoning_agent, cache_store
+from agents.policy_generation_agent import create_policy_generation_agent, generate_policy_text_file
+from google.adk.models.lite_llm import LiteLlm
 
 
 APP_NAME = "insurance_adk_demo"
@@ -31,22 +34,34 @@ def _find_json_object(text: str) -> dict[str, Any]:
     Attempts to extract the first JSON object found in the model output.
     ADK output_schema *should* already return pure JSON, but this is a safety net.
     """
-
+    # Pre-processing: Strip markdown and conversational preamble
     candidate = text.strip()
-    # Strip common markdown fences if the model included them.
-    if candidate.startswith("```"):
-        # Take the content inside the first fenced block.
-        parts = candidate.split("```", 2)
-        if len(parts) >= 2:
-            candidate = parts[1].strip()
+    if "```json" in candidate:
+        candidate = candidate.split("```json")[1].split("```")[0].strip()
+    elif "```" in candidate:
+        candidate = candidate.split("```")[1].split("```")[0].strip()
 
     start = candidate.find("{")
-    end = candidate.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError("Could not locate a JSON object in the LLM output.")
+    if start == -1:
+        raise ValueError(f"No opening brace '{{' found in LLM output. Raw: {text[:200]}...")
 
-    json_str = candidate[start : end + 1]
-    return json.loads(json_str)
+    # Robust extraction: find the matching closing brace if possible
+    # If missing, we try to return what we have (best effort parsing)
+    json_str = candidate[start:]
+    
+    # Try to clean up trailing text (e.g. "Note: ...")
+    last_brace = json_str.rfind("}")
+    if last_brace != -1:
+        json_str = json_str[:last_brace + 1]
+    
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError:
+        # Fallback: try to manually close the object if it's just a missing bracket
+        try:
+            return json.loads(json_str + "}")
+        except:
+            raise ValueError(f"Failed to parse JSON even with recovery. Raw: {json_str[:200]}...")
 
 
 def _card(title: str) -> None:
@@ -115,18 +130,30 @@ async def main() -> None:
     # Load `insurance_adk_demo/.env` for local runs (keeps project self-contained).
     load_dotenv(dotenv_path=base_dir / ".env")
 
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GOOGLE_GENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError(
-            "Missing Gemini API key. Set `GOOGLE_API_KEY` (or `GOOGLE_GENAI_API_KEY`) in a local .env file."
-        )
-
-    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    gemini_model: str | LiteLlm = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
     if not gemini_model:
-        raise RuntimeError("Missing GEMINI_MODEL. Set it in `.env` (default is gemini-2.5-flash).")
+        raise RuntimeError("Missing GEMINI_MODEL. Set it in `.env`.")
+
+    # If the model name looks like a LiteLLM provider (e.g. "groq/", "openai/"), wrap it.
+    if isinstance(gemini_model, str) and ("/" in gemini_model or gemini_model.startswith("groq")):
+        print(f"Using LiteLLM for model: {gemini_model}")
+        gemini_model = LiteLlm(model=gemini_model)
+
+    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GOOGLE_GENAI_API_KEY")
+    if not api_key and not isinstance(gemini_model, LiteLlm):
+        raise RuntimeError(
+            "Missing Gemini API key and not using LiteLLM. Set `GOOGLE_API_KEY` in a local .env file."
+        )
     dummy_payload_path = base_dir / "data" / "dummy_payload.json"
     with dummy_payload_path.open("r", encoding="utf-8") as f:
         payload = json.load(f)
+
+    # Use data/data.txt as the primary source for medical notes if it exists
+    data_txt_path = base_dir / "data" / "data.txt"
+    if data_txt_path.exists():
+        medical_notes = data_txt_path.read_text(encoding="utf-8")
+        payload["raw_medical_text"] = medical_notes
+        print(f"Loaded detailed clinical notes from {data_txt_path.name}")
 
     # Rules are read inside compliance_agent.py, but we also print them for visibility.
     _rules_path = base_dir / "data" / "irdai_rules.json"
@@ -176,6 +203,37 @@ async def main() -> None:
     print("NLP output:")
     print(json.dumps(nlp_result, indent=2))
 
+    # Step E: Clinical Reasoning (New)
+    clinical_result = None
+    meds = nlp_result.get("medications", [])
+    if meds:
+        _subcard("Step E: Clinical Reasoning & Pharmacology (ADK + openFDA)")
+        # Gathering raw data from APIs
+        raw_assessments = await evaluate_clinical_risk(meds, model=gemini_model)
+        
+        # Now run the LLM agent over that collected data
+        clinical_agent = create_clinical_reasoning_agent(gemini_model)
+        attempt_session_id = f"{SESSION_ID}_clinical"
+        await session_service.create_session(
+            app_name=APP_NAME, user_id=USER_ID, session_id=attempt_session_id
+        )
+        clinical_runner = Runner(agent=clinical_agent, app_name=APP_NAME, session_service=session_service)
+        
+        clinical_result = await run_llm_agent(
+            clinical_agent,
+            clinical_runner,
+            session_service,
+            attempt_session_id,
+            input_data={"contexts": raw_assessments},
+        )
+        print("Clinical logic summary:")
+        print(json.dumps(clinical_result, indent=2))
+        
+        # Cache write-back (demo)
+        for idx, assess in enumerate(clinical_result.get("assessments", [])):
+            if idx < len(meds):
+                cache_store.set(meds[idx], assess)
+
     # Step B: Fraud/contradiction
     fraud_input = {
         "declared_smoker": payload["declared_smoker"],
@@ -210,17 +268,46 @@ async def main() -> None:
     print("Fraud output:")
     print(json.dumps(fraud_result, indent=2))
 
+    # --- HUMAN IN THE LOOP (HITL) ---
+    final_smoker_status = payload["declared_smoker"]
+    if fraud_result.get("fraud_contradiction"):
+        _subcard("HUMAN IN THE LOOP: Fraud Resolution Needed!")
+        print(f"FRAUD SIGNAL: {fraud_result.get('fraud_reason')}")
+        print(f"Evidence found: {fraud_result.get('key_evidence_snippets', [])}")
+        print()
+        print("ACTION REQUIRED: How do you want to proceed?")
+        print("1. Type 'force' to move user to Smoker category and apply fraud load.")
+        print("2. Type 'accept' to ignore findings and proceed as Non-Smoker.")
+        
+        # Wait for terminal input (demo mode)
+        user_choice = input("\nDecision [force/accept]: ").strip().lower()
+        
+        if user_choice == 'force':
+            print(">>> UNDERWRITER ACTION: Manually forcing Smoker Status + Fraud Load.")
+            fraud_result["fraud_risk_flag"] = True
+            final_smoker_status = True
+        else:
+            print(">>> UNDERWRITER ACTION: Accepting Application Statement (No Fraud Load).")
+            fraud_result["fraud_risk_flag"] = False
+            final_smoker_status = False
+
     # Step C: Pricing
-    _subcard("Step C: Pricing Load (Pure Python)")
+    _subcard("Step C: Pricing Load (Pure Python - Aggregate Risk)")
     base_premium = 10000
+    
+    # Get the risk class from clinical results if available, else default to 'Standard'
+    med_risk_class = clinical_result.get("overall_medical_risk_class", "Standard") if clinical_result else "Standard"
+    
     pricing = calculate_premium(
-        base_premium=base_premium, fraud_risk_flag=fraud_result["fraud_risk_flag"]
+        base_premium=base_premium, 
+        fraud_risk_flag=fraud_result["fraud_risk_flag"],
+        medical_risk_class=med_risk_class
     )
     print(json.dumps(pricing, indent=2))
 
     # Step D: Compliance
     _subcard("Step D: Compliance Check (Pure Python)")
-    compliance = compliance_check(premium_load_factor=pricing["load_factor"])
+    compliance = compliance_check(premium_load_factor=pricing["total_load_factor"])
     print(json.dumps(compliance, indent=2))
 
     # Final report
@@ -234,10 +321,44 @@ async def main() -> None:
     print(f"Evidence of tobacco/nicotine in note: {tobacco_evidence}")
     print(f"Inferred smoker from evidence: {inferred_smoker}")
     print(f"Fraud contradiction risk flag: {fraud_flag}")
-    print(f"Applied premium load: {pricing['load_factor']}")
+    print(f"Medical Risk Category: {med_risk_class}")
+    print(f"Applied premium load: {pricing['total_load_factor']}")
+    print(f"Final Decision: {pricing.get('underwriting_decision')}")
     print(
         f"Compliant load (<= {compliance['tobacco_load_max_cap']}): {compliance['compliant']}"
     )
+
+    # Step F: Policy Generation (New)
+    _subcard("Step F: Policy Issuance & Document Generation")
+    policy_input = {
+        "applicant_name": payload["name"],
+        "underwriting_decision": pricing.get("underwriting_decision"),
+        "total_premium": pricing.get("premium_total"),
+        "risk_logic": clinical_result.get("clinical_summary") if clinical_result else "Standard evaluation",
+        "total_load_factor": pricing.get("total_load_factor")
+    }
+    
+    policy_agent = create_policy_generation_agent(gemini_model)
+    attempt_session_id = f"{SESSION_ID}_policy"
+    await session_service.create_session(
+        app_name=APP_NAME, user_id=USER_ID, session_id=attempt_session_id
+    )
+    policy_runner = Runner(agent=policy_agent, app_name=APP_NAME, session_service=session_service)
+    
+    policy_json = await run_llm_agent(
+        policy_agent,
+        policy_runner,
+        session_service,
+        attempt_session_id,
+        input_data=policy_input,
+    )
+    
+    generated_path = generate_policy_text_file(payload["name"], policy_json)
+    print(f"Policy issued successfully!")
+    print(f"Document saved to: {generated_path}")
+    print()
+    print("Issuance Summary Preview:")
+    print(policy_json.get("policy_body_text", "").strip()[:300] + "...")
 
     # Make it explicit how the model reasoned (without dumping raw chain-of-thought).
     _subcard("Why the Model Flagged It (LLM Reasoning)")
@@ -250,6 +371,9 @@ async def main() -> None:
     _subcard("Models Used")
     print(f"NLP model: {used_nlp_model}")
     print(f"Fraud model: {used_fraud_model}")
+    if clinical_result:
+        print(f"Clinical Risk: {clinical_result.get('overall_medical_risk_class')}")
+        print(f"Risk Logic: {clinical_result.get('clinical_summary')}")
 
     print()
     print("END OF RUN")

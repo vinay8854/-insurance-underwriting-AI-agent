@@ -3,5 +3,5 @@
   "name": "Vinay",
   "age": 22,
   "declared_smoker": false,
-  "raw_medical_text": "Patient health is good."
+  "raw_medical_text": "Patient has type 2 diabetes and takes Metformin. Otherwise health is good."
 }

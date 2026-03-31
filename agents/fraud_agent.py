@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import List
 
 from google.adk.agents import LlmAgent
+from google.adk.models.lite_llm import LiteLlm
 from google.genai import types
 from pydantic import BaseModel, Field
 
@@ -46,7 +47,7 @@ class FraudOutput(BaseModel):
     )
 
 
-def create_fraud_agent(model: str) -> LlmAgent:
+def create_fraud_agent(model: str | LiteLlm) -> LlmAgent:
     instruction = """
 You are an Insurance Underwriting fraud/contradiction detection agent.
 
@@ -63,13 +64,6 @@ Task:
 3. fraud_risk_flag should be the same as fraud_contradiction for this PoC.
 4. Provide fraud_reason that clearly explains the contradiction using evidence_summary.
 
-Output rules (strict):
-- Return ONLY a single valid JSON object (no markdown, no code fences).
-- No trailing commas.
-- Use JSON booleans `true`/`false`.
-- The JSON must contain ALL keys in the output schema.
-
-JSON keys you must output:
 {
   "fraud_contradiction": boolean,
   "fraud_risk_flag": boolean,
@@ -88,11 +82,9 @@ JSON keys you must output:
         include_contents="none",
         generate_content_config=types.GenerateContentConfig(
             temperature=0.2,
-            max_output_tokens=512,
-            response_mime_type="application/json",
+            max_output_tokens=1024,
         ),
         input_schema=FraudInput,
-        output_schema=FraudOutput,
         output_key="fraud_result",
     )
 

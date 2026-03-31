@@ -11,6 +11,7 @@ from xml.etree import ElementTree as ET
 from google.adk.agents import LlmAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
+from google.adk.models.lite_llm import LiteLlm
 from google.genai import types
 from pydantic import BaseModel, Field
 
@@ -117,7 +118,7 @@ def _read_any_file_to_text(path: Path) -> dict[str, Any]:
     }
 
 
-def create_document_to_text_agent(model: str) -> LlmAgent:
+def create_document_to_text_agent(model: str | LiteLlm) -> LlmAgent:
     instruction = """
 You are a medical-document normalization NLP agent.
 
@@ -227,33 +228,32 @@ class TobaccoEvidenceOutput(BaseModel):
     reasoning_summary: str = Field(
         ..., description="A short, human-readable explanation of the decision process."
     )
+    medications: List[str] = Field(
+        default_factory=list,
+        description="List of detected medication names (e.g., Metformin, Lisinopril) found in the text."
+    )
 
 
-def create_tobacco_evidence_agent(model: str) -> LlmAgent:
+def create_tobacco_evidence_agent(model: str | LiteLlm) -> LlmAgent:
     instruction = """
 You are an Insurance Underwriting NLP evidence extraction agent.
 
-Goal: Given a medical note, decide whether there is any evidence of tobacco or nicotine use.
+Goal: Given a medical note, decide whether there is any evidence of tobacco or nicotine use AND extract all mentioned medications.
 
 Rules:
 1. Scan for nicotine/tobacco indicators such as: cigarettes, smoking, tobacco, nicotine, patches (e.g., Nicotex), gum, vaping, etc.
-2. Evidence must be explicitly grounded in the provided text. If there is no explicit evidence, return false.
+2. Identify all medication names (generic or brand name) mentioned in the text (e.g. Metformin, Insulin, Atenolol).
+3. Evidence must be explicitly grounded in the provided text. If there is no explicit evidence, return false.
 3. evidence_snippets must be short quoted substrings from the provided text (up to ~12 words each). If none, return [].
 4. inferred_smoker_status should be true if tobacco/nicotine evidence is found; else false.
 
-Output rules (strict):
-- Return ONLY a single valid JSON object (no markdown, no code fences).
-- No trailing commas.
-- Use JSON booleans `true`/`false`.
-- The JSON must contain ALL keys in the output schema.
-
-JSON keys you must output:
 {
   "tobacco_nicotine_evidence_found": boolean,
   "inferred_smoker_status": boolean,
   "evidence_snippets": string[],
   "evidence_summary": string,
-  "reasoning_summary": string
+  "reasoning_summary": string,
+  "medications": string[]
 }
 """.strip()
 
@@ -265,16 +265,14 @@ JSON keys you must output:
         include_contents="none",
         generate_content_config=types.GenerateContentConfig(
             temperature=0.2,
-            max_output_tokens=512,
-            response_mime_type="application/json",
+            max_output_tokens=1024,
         ),
         input_schema=TobaccoEvidenceInput,
-        output_schema=TobaccoEvidenceOutput,
         output_key="nlp_result",
     )
 
 
 # Backward-compatible alias used by current main.py
-def create_nlp_agent(model: str) -> LlmAgent:
+def create_nlp_agent(model: str | LiteLlm) -> LlmAgent:
     return create_tobacco_evidence_agent(model)
 

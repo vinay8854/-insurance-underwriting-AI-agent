@@ -1,0 +1,26 @@
+==============================================================================
+Insurance Policy Summary for Vinay
+==============================================================================
+
+Dear Vinay,
+
+Thank you for applying for our insurance policy. We have carefully reviewed your application and have referred it for a manual review due to your high risk profile.
+
+Our underwriting team has identified that your medical history, specifically the presence of Nicotex, presents a moderate to high risk. However, we have also noted that your use of Varenicline and Salbutamol has a low to moderate risk profile.
+
+As a result, we have determined that your risk class is Substandard. We will be conducting a manual review to assess your overall risk and determine the best course of action.
+
+We will be in touch with you shortly to discuss the next steps and provide you with a revised premium quote. Please do not hesitate to contact us if you have any questions or concerns.
+
+Thank you for your understanding.
+
+Sincerely,
+[Your Insurance Company Name]
+
+------------------------------------------------------------------------------
+NEXT STEPS:
+Our underwriting team will be in touch with you shortly to discuss the next steps and provide you with a revised premium quote. Please do not hesitate to contact us if you have any questions or concerns.
+------------------------------------------------------------------------------
+Generated at: LOCAL-ISSUANCE-NODE
+Status: ISSUED-TO-BROKER
+==============================================================================

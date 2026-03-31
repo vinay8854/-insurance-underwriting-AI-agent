@@ -1,0 +1,74 @@
+{
+  "metformin": {
+    "drug_name": "Metformin",
+    "standard_name": "24 HR metformin hydrochloride 1000 MG / saxagliptin 2.5 MG Extended Release Oral Tablet [Kombiglyze]",
+    "common_side_effects": [
+      "Diarrhea",
+      "Nausea",
+      "Vomiting",
+      "Abdominal Pain"
+    ],
+    "serious_boxed_warnings": [
+      "Lactic Acidosis",
+      "Hypoglycemia"
+    ],
+    "underwriting_logic": "This medication is used to treat type 2 diabetes. It has a boxed warning for lactic acidosis, a rare but serious condition. It also has a boxed warning for hypoglycemia, which can be a serious condition if not managed properly. The applicant should be carefully evaluated for their risk of developing these conditions."
+  },
+  "varenicline": {
+    "drug_name": "Varenicline",
+    "standard_name": "Chantix",
+    "common_side_effects": [],
+    "serious_boxed_warnings": [],
+    "underwriting_logic": "Varenicline is used to treat nicotine addiction. It is a prescription medication with a moderate risk profile. No serious boxed warnings or common side effects were found in the provided data."
+  },
+  "nicotex": {
+    "drug_name": "Nicotex",
+    "standard_name": "Nicotex",
+    "common_side_effects": [
+      "ASTHMA",
+      "CARDIAC FAILURE CONGESTIVE"
+    ],
+    "serious_boxed_warnings": [],
+    "underwriting_logic": "Nicotex is a nicotine replacement therapy with a high risk profile due to common side effects such as asthma and cardiac failure. No serious boxed warnings were found in the provided data."
+  },
+  "salbutamol": {
+    "drug_name": "Salbutamol",
+    "standard_name": "Albuterol",
+    "common_side_effects": [],
+    "serious_boxed_warnings": [],
+    "underwriting_logic": "Salbutamol is used to treat asthma and COPD. It is a prescription medication with a low risk profile. No serious boxed warnings or common side effects were found in the provided data."
+  },
+  "salbutamol hfa": {
+    "drug_name": "Salbutamol HFA",
+    "standard_name": "Salbutamol HFA",
+    "common_side_effects": [
+      "throat irritation",
+      "viral respiratory infections",
+      "upper respiratory inflammation",
+      "cough",
+      "musculoskeletal pain"
+    ],
+    "serious_boxed_warnings": [
+      "paradoxical bronchospasm",
+      "cardiovascular effects",
+      "immediate hypersensitivity reactions",
+      "hypokalemia"
+    ],
+    "underwriting_logic": "Salbutamol HFA is a medication used to treat asthma and COPD. It has a moderate risk profile due to common side effects such as throat irritation and viral respiratory infections. Serious boxed warnings include paradoxical bronchospasm, cardiovascular effects, immediate hypersensitivity reactions, and hypokalemia."
+  },
+  "salbutamol hfa inhaler": {
+    "drug_name": "Salbutamol HFA inhaler",
+    "standard_name": "Salbutamol HFA inhaler",
+    "common_side_effects": [
+      "DYSPNOEA",
+      "ASTHMA",
+      "COUGH",
+      "PNEUMONIA"
+    ],
+    "serious_boxed_warnings": [
+      "WARNING: Diagnostic and therapeutic allergenic extracts are intended to be administered by a physician who is an allergy specialist and experienced in allergenic diagnostic testing and immunotherapy and the emergency care of anaphylaxis.",
+      "WARNING: Sensitive patients may experience severe anaphylactic reactions resulting in respiratory obstruction, shock, coma and/or death."
+    ],
+    "underwriting_logic": "Salbutamol HFA inhaler is used to treat asthma and COPD. It has a high risk profile due to serious boxed warnings and common side effects such as dyspnea, asthma, cough, and pneumonia."
+  }
+}
